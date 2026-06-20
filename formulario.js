@@ -1,64 +1,133 @@
-// Función que muestra un cuadro de diálogo y obliga a responder
-function hacerPreguntaObligatoria(mensaje) {
-  let respuesta = "";
+// Base de datos temporal (Arreglo donde guardaremos a los empleados)
+const empleados = [];
 
-  while (!respuesta) {
-    // prompt() abre una ventana emergente en el navegador para pedir datos
-    let entrada = prompt(mensaje);
-
-    // Si el usuario no cancela la ventana, limpiamos los espacios en blanco
-    if (entrada !== null) {
-      respuesta = entrada.trim();
+// Función auxiliar para obligar a llenar los campos sin dejar vacíos
+function solicitarDato(mensaje) {
+    let dato = "";
+    while (!dato) {
+        let entrada = prompt(mensaje);
+        // Si el usuario presiona "Cancelar", retornamos null para abortar la acción
+        if (entrada === null) return null; 
+        
+        dato = entrada.trim();
+        if (!dato) {
+            alert("❌ Este campo es obligatorio. No puedes dejarlo vacío.");
+        }
     }
-
-    // Si la respuesta sigue vacía (o si el usuario presionó "Cancelar")
-    if (!respuesta) {
-      console.warn(
-        "❌ Error: Este campo no puede estar vacío. Inténtalo de nuevo.",
-      );
-      // Un alert también sirve para que el usuario lo note inmediatamente
-      alert("❌ Este campo es obligatorio. Por favor, llénalo.");
-    }
-  }
-
-  return respuesta;
+    return dato;
 }
 
-// Función principal
-function iniciarFormulario() {
-  // Limpiar la consola antes de empezar
-  console.clear();
+// Función principal que controla el flujo del programa
+function iniciarSistema() {
+    let ejecutando = true;
 
-  // Imprimir un encabezado con estilos (el %c permite aplicar CSS en la consola)
-  console.log(
-    "%c📋 FORMULARIO DE REGISTRO",
-    "color: #007bff; font-size: 16px; font-weight: bold;",
-  );
-  console.log("===============================\n");
+    // El ciclo mantiene el programa vivo hasta que 'ejecutando' sea false
+    while (ejecutando) {
+        // Mostrar menú principal y guardar la opción elegida
+        const opcion = prompt(
+            "🏢 SISTEMA DE GESTIÓN DE EMPLEADOS\n\n" +
+            "Elige una opción (escribe el número):\n" +
+            "1. Registrar nuevo empleado\n" +
+            "2. Listar todos los empleados\n" +
+            "3. Buscar empleado por Identificación\n" +
+            "4. Mostrar cantidad total de empleados\n" +
+            "5. Salir del sistema"
+        );
 
-  // Recolectar datos
-  const nombre = hacerPreguntaObligatoria("1. Ingresa tu nombre:");
-  const apellido = hacerPreguntaObligatoria("2. Ingresa tu apellido:");
-  const profesion = hacerPreguntaObligatoria(
-    "3. Ingresa tu profesión o estudio:",
-  );
+        // Evaluar la opción seleccionada
+        switch (opcion) {
+            case "1": // REGISTRAR EMPLEADO
+                console.clear();
+                console.log("%c--- 📝 REGISTRO DE EMPLEADO ---", "color: #007bff; font-weight: bold;");
+                
+                const id = solicitarDato("1. Identificación:");
+                if (id === null) break; // Si cancela, vuelve al menú principal
+                
+                // Validación extra: Verificar que la ID no exista ya en el sistema
+                const existe = empleados.some(emp => emp["Identificación"] === id);
+                if (existe) {
+                    alert("⚠️ Error: Ya existe un empleado registrado con esa identificación.");
+                    break;
+                }
 
-  // Mostrar el mensaje de éxito
-  console.log(
-    "\n%c✅ ¡Formulario completado con éxito!",
-    "color: #28a745; font-size: 14px; font-weight: bold;",
-  );
+                const nombre = solicitarDato("2. Nombre completo:");
+                if (nombre === null) break;
+                
+                const cargo = solicitarDato("3. Cargo:");
+                if (cargo === null) break;
+                
+                const salario = solicitarDato("4. Salario:");
+                if (salario === null) break;
+                
+                const area = solicitarDato("5. Área de trabajo:");
+                if (area === null) break;
 
-  // Agrupar los datos en un objeto para mostrarlos en una tabla
-  const datosUsuario = {
-    Nombre: nombre,
-    Apellido: apellido,
-    Profesión: profesion,
-  };
+                // Guardar los datos como un objeto dentro del arreglo
+                empleados.push({
+                    "Identificación": id,
+                    "Nombre": nombre,
+                    "Cargo": cargo,
+                    "Salario": salario,
+                    "Área": area
+                });
+                
+                alert(`✅ Empleado ${nombre} registrado con éxito.`);
+                console.log(`✅ Empleado ${nombre} registrado con éxito.`);
+                break;
 
-  // console.table crea una tabla visual muy útil en el navegador
-  console.table(datosUsuario);
+            case "2": // LISTAR EMPLEADOS
+                console.clear();
+                console.log("%c--- 📋 LISTA DE EMPLEADOS ---", "color: #28a745; font-weight: bold;");
+                
+                if (empleados.length === 0) {
+                    console.log("No hay empleados registrados en el sistema.");
+                    alert("ℹ️ No hay empleados registrados todavía.");
+                } else {
+                    console.table(empleados);
+                    alert(`Mostrando ${empleados.length} empleado(s). Revisa la consola (F12) para ver la tabla detallada.`);
+                }
+                break;
+
+            case "3": // BUSCAR EMPLEADO
+                console.clear();
+                const idBuscada = prompt("🔍 Ingresa la identificación del empleado a buscar:");
+                
+                // Si el usuario cancela o deja vacío, salir de esta opción
+                if (!idBuscada) break; 
+
+                // Buscar el objeto que coincida con la ID proporcionada
+                const empleadoEncontrado = empleados.find(emp => emp["Identificación"] === idBuscada.trim());
+                
+                if (empleadoEncontrado) {
+                    console.log("%c--- 👤 EMPLEADO ENCONTRADO ---", "color: #17a2b8; font-weight: bold;");
+                    console.table([empleadoEncontrado]); // Mostrarlo en una tabla de 1 sola fila
+                    alert(`✅ Empleado encontrado: ${empleadoEncontrado.Nombre} - ${empleadoEncontrado.Cargo}.\nRevisa la consola para más detalles.`);
+                } else {
+                    console.warn("❌ Empleado no encontrado.");
+                    alert("❌ No se encontró ningún empleado con la identificación: " + idBuscada);
+                }
+                break;
+
+            case "4": // MOSTRAR CANTIDAD TOTAL
+                console.clear();
+                const total = empleados.length;
+                console.log(`%c📊 TOTAL DE EMPLEADOS: ${total}`, "color: #6f42c1; font-weight: bold; font-size: 14px;");
+                alert(`📊 El sistema tiene actualmente ${total} empleado(s) registrado(s).`);
+                break;
+
+            case "5": // SALIR
+            case null: // También sale si el usuario presiona "Cancelar" en el menú principal
+                ejecutando = false;
+                console.clear();
+                console.log("%c👋 Sistema cerrado. ¡Hasta luego!", "color: #dc3545; font-size: 16px; font-weight: bold;");
+                break;
+
+            default: // MANEJO DE ERRORES (Opción incorrecta)
+                alert("⚠️ Opción no válida. Por favor, ingresa un número del 1 al 5.");
+                break;
+        }
+    }
 }
 
-// Iniciar el programa
-iniciarFormulario();
+// Arrancar el programa
+iniciarSistema();
